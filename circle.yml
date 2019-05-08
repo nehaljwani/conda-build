@@ -76,20 +76,20 @@ conda_build_test: &conda_build_test
           eval "$(sudo /opt/conda/bin/python -m conda init --dev bash)"
           echo "safety_checks: disabled" >> ~/.condarc
           echo "local_repodata_ttl: 1800" >> ~/.condarc
-          conda create -n blarg -yq --download-only python=2.7
-          conda create -n blarg -yq -c https://repo.anaconda.com/pkgs/free --download-only python=3.4
-          conda create -n blarg -yq --download-only python=3.5
-          conda create -n blarg -yq --download-only python=3.6
-          conda create -n blarg -yq --download-only python=3.7
-          conda create -n blarg -yq --download-only python setuptools cython certifi
-          conda create -n blarg -yq -c https://repo.anaconda.com/pkgs/free --download-only libpng=1.6.17
+#          conda create -n blarg -yq --download-only python=2.7
+#          conda create -n blarg -yq -c https://repo.anaconda.com/pkgs/free --download-only python=3.4
+#          conda create -n blarg -yq --download-only python=3.5
+#          conda create -n blarg -yq --download-only python=3.6
+#          conda create -n blarg -yq --download-only python=3.7
+#          conda create -n blarg -yq --download-only python setuptools cython certifi
+#          conda create -n blarg -yq -c https://repo.anaconda.com/pkgs/free --download-only libpng=1.6.17
 
-    - run:
-        name: conda-build conda
-        command: |
-          eval "$(sudo /opt/conda/bin/python -m conda init --dev bash)"
-          rm -rf ~/conda/conda.egg-info
-          conda build ~/conda/conda.recipe
+#    - run:
+#        name: conda-build conda
+#        command: |
+#          eval "$(sudo /opt/conda/bin/python -m conda init --dev bash)"
+#          rm -rf ~/conda/conda.egg-info
+#          conda build ~/conda/conda.recipe
 
     - run:
         name: conda-build tests [parallel]
@@ -146,40 +146,41 @@ conda_build_test: &conda_build_test
             conda config --add default_channels https://repo.anaconda.com/pkgs/main
             conda info
             cd ~/conda-build
-            py.test --basetemp /tmp/cb -v --durations=20 -n 2 -m "not serial" tests -k "$CONDABUILD_SKIP"
+#            py.test --basetemp /tmp/cb -v --durations=20 -n 2 -m "not serial" tests -k "$CONDABUILD_SKIP"
+            pytest -k test_conda_py_no_period -s
           fi
 
-    - run:
-        name: conda-build tests [serial]
-        environment:
-          CONDABUILD_SKIP: >
-            not perl-cpan-Moo
-            and not cran-nmf
-            and not skeleton_pypi
-            and not env_creation_with_short_prefix_does_not_deadlock
-            and not test_preferred_env
-            and not test_setuptools_test_requirements
-            and not rpm-libX11-devel
-          # skipping perl-cpan-Moo because of changes in cpan API
-          # skipping cran-nmf because nmf was removed/archived in cran
-          # skeleton_pypi skipped because of changes to PyPI API
-          # env_creation_with_short_prefix_does_not_deadlock: error is prefix is too long
-          # for test_preferred_env see https://github.com/conda/conda/issues/3912#issuecomment-374820599
-          # test_setuptools_test_requirements upstream changes that affect 'conda skeleton'
-          # rpm-libX11-devel returns 404 error
-        command: |
-          if [[ $(git diff origin/master --name-only | wc -l) == $(git diff origin/master --name-only | grep docs | wc -l) && $(git diff origin/master --name-only | grep docs) ]]; then
-              echo "Only docs changed detected, skipping tests"
-          else
-            eval "$(sudo /opt/conda/bin/python -m conda init --dev bash)"
-            conda config --add default_channels https://repo.anaconda.com/pkgs/free
-            conda config --add default_channels https://repo.anaconda.com/pkgs/r
-            conda config --add default_channels https://repo.anaconda.com/pkgs/main
-            conda info
-            cd ~/conda-build
-            py.test --basetemp /tmp/cb -v --durations=20 -n 0 -m "serial" tests -k "$CONDABUILD_SKIP"
-            /opt/conda/bin/python -m conda.common.io
-          fi
+#    - run:
+#        name: conda-build tests [serial]
+#        environment:
+#          CONDABUILD_SKIP: >
+#            not perl-cpan-Moo
+#            and not cran-nmf
+#            and not skeleton_pypi
+#            and not env_creation_with_short_prefix_does_not_deadlock
+#            and not test_preferred_env
+#            and not test_setuptools_test_requirements
+#            and not rpm-libX11-devel
+#          # skipping perl-cpan-Moo because of changes in cpan API
+#          # skipping cran-nmf because nmf was removed/archived in cran
+#          # skeleton_pypi skipped because of changes to PyPI API
+#          # env_creation_with_short_prefix_does_not_deadlock: error is prefix is too long
+#          # for test_preferred_env see https://github.com/conda/conda/issues/3912#issuecomment-374820599
+#          # test_setuptools_test_requirements upstream changes that affect 'conda skeleton'
+#          # rpm-libX11-devel returns 404 error
+#        command: |
+#          if [[ $(git diff origin/master --name-only | wc -l) == $(git diff origin/master --name-only | grep docs | wc -l) && $(git diff origin/master --name-only | grep docs) ]]; then
+#              echo "Only docs changed detected, skipping tests"
+#          else
+#            eval "$(sudo /opt/conda/bin/python -m conda init --dev bash)"
+#            conda config --add default_channels https://repo.anaconda.com/pkgs/free
+#            conda config --add default_channels https://repo.anaconda.com/pkgs/r
+#            conda config --add default_channels https://repo.anaconda.com/pkgs/main
+#            conda info
+#            cd ~/conda-build
+#            py.test --basetemp /tmp/cb -v --durations=20 -n 0 -m "serial" tests -k "$CONDABUILD_SKIP"
+#            /opt/conda/bin/python -m conda.common.io
+#          fi
 
 
 flake8: &flake8
@@ -201,24 +202,24 @@ build_docs: &build_docs
           make html
 
 jobs:
-  py37 main tests:
-    <<: *main_test
-    docker:
-      - image: condatest/linux-64-python-3.7
-    environment:
-      - CONDA_INSTRUMENTATION_ENABLED: true
-  py36 main tests:
-    <<: *main_test
-    docker:
-      - image: condatest/linux-64-python-3.6
-    environment:
-      - CONDA_INSTRUMENTATION_ENABLED: true
-  py27 main tests:
-    <<: *main_test
-    docker:
-      - image: condatest/linux-64-python-2.7
-    environment:
-      - CONDA_INSTRUMENTATION_ENABLED: true
+#  py37 main tests:
+#    <<: *main_test
+#    docker:
+#      - image: condatest/linux-64-python-3.7
+#    environment:
+#      - CONDA_INSTRUMENTATION_ENABLED: true
+#  py36 main tests:
+#    <<: *main_test
+#    docker:
+#      - image: condatest/linux-64-python-3.6
+#    environment:
+#      - CONDA_INSTRUMENTATION_ENABLED: true
+#  py27 main tests:
+#    <<: *main_test
+#    docker:
+#      - image: condatest/linux-64-python-2.7
+#    environment:
+#      - CONDA_INSTRUMENTATION_ENABLED: true
   3.10 conda-build:
     <<: *conda_build_test
     # mpi4py test in conda-build needs py<3.7
